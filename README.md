@@ -22,8 +22,7 @@ This `main` branch contains the codes and model for CameraCtrl implemented on An
 * CUDA 11.7 
 * Users can use the following commands to install the packages
 ```bash
-conda env create -f environment.yaml
-conda activate cameractrl
+uv sync
 ```
 
 ### Dataset
@@ -62,6 +61,14 @@ conda activate cameractrl
 - Download the checkpoints of AnimateDiffV3 (ADV3) adaptor and motion module from [AnimateDiff](https://github.com/guoyww/AnimateDiff).
 - Download the pretrained camera control model from [HuggingFace](https://huggingface.co/hehao13/CameraCtrl/blob/main/CameraCtrl.ckpt).
 - Run `tools/merge_lora2unet.py` to merge the ADV3 adaptor weights into SD1.5 unet and save results to new subfolder (like, `unet_webvidlora_v3`) under the SD1.5 folder.
+```bash
+ python tools/merge_lora2unet.py \
+  --lora_ckpt_path models/MotionLoRA/v3_sd15_adapter.ckpt \
+  --unet_ckpt_path models/StableDiffusion \
+  --save_path models/StableDiffusion/unet_webvidlora_v3 \
+  --unet_config_path models/StableDiffusion/unet/config.json 
+```
+
 - (Optional) Download the pretrained image LoRA model on RealEstate10K dataset from [HuggingFace](https://huggingface.co/hehao13/CameraCtrl/blob/main/RealEstate10K_LoRA.ckpt) to sample videos on indoor and outdoor estates.
 - (Optional) Download the personalized base model, like [Realistic Vision](https://civitai.com/models/4201?modelVersionId=130072) from [CivitAI](https://civitai.com).
 
@@ -72,17 +79,17 @@ conda activate cameractrl
 ### Inference
 - Run `inference.py` to sample videos
 ```shell
-python -m torch.distributed.launch --nproc_per_node=8 --master_port=25000 inference.py \
-      --out_root ${OUTPUT_PATH} \
-      --ori_model_path ${SD1.5_PATH} \ 
-      --unet_subfolder ${SUBFOUDER_NAME} \
-      --motion_module_ckpt ${ADV3_MM_CKPT} \ 
-      --pose_adaptor_ckpt ${CAMERACTRL_CKPT} \
-      --model_config configs/train_cameractrl/adv3_256_384_cameractrl_relora.yaml \
-      --visualization_captions assets/cameractrl_prompts.json \
-      --use_specific_seeds \
-      --trajectory_file assets/pose_files/0f47577ab3441480.txt \
-      --n_procs 8
+torchrun --nproc_per_node=2  inference.py \
+    --out_root outputs/test_result \
+    --ori_model_path models/StableDiffusion \
+    --unet_subfolder unet_webvidlora_v3 \
+    --motion_module_ckpt models/Motion_Module/v3_sd15_mm.ckpt \
+    --pose_adaptor_ckpt models/CameraCtrl/CameraCtrl.ckpt \
+    --model_config configs/train_cameractrl/adv3_256_384_cameractrl_relora.yaml \
+    --visualization_captions assets/cameractrl_prompts.json \
+    --use_specific_seeds \
+    --trajectory_file assets/pose_files/0f47577ab3441480.txt \
+    --n_procs 2
 ```
 
 where
