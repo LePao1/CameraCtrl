@@ -252,16 +252,19 @@ def main(args):
 
     cam_params = [[float(x) for x in pose] for pose in poses]
     cam_params = [Camera(cam_param) for cam_param in cam_params]
-    sample_wh_ratio = args.image_width / args.image_height
-    pose_wh_ratio = args.original_pose_width / args.original_pose_height
-    if pose_wh_ratio > sample_wh_ratio:
-        resized_ori_w = args.image_height * pose_wh_ratio
+
+    # Align camera focal length to match target aspect ratio (assuming center crop)
+    sample_ratio = args.image_width / args.image_height
+    pose_ratio = args.original_pose_width / args.original_pose_height
+    if pose_ratio > sample_ratio:
+        scale = pose_ratio / sample_ratio
         for cam_param in cam_params:
-            cam_param.fx = resized_ori_w * cam_param.fx / args.image_width
+            cam_param.fx *= scale
     else:
-        resized_ori_h = args.image_width / pose_wh_ratio
+        scale = sample_ratio / pose_ratio
         for cam_param in cam_params:
-            cam_param.fy = resized_ori_h * cam_param.fy / args.image_height
+            cam_param.fy *= scale
+
     intrinsic = np.asarray(
         [
             [
