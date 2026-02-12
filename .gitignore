@@ -6,6 +6,7 @@ __pycache__/
 ossutil_output/
 .ossutil_checkpoint/
 .idea/
+.vscode/
 .DS_Store/
 
 scripts/
